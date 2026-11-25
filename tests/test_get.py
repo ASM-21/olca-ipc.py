@@ -27,6 +27,21 @@ class GetTest(unittest.TestCase):
             "kg", next(filter(lambda u: u.is_ref_unit, group.units)).name
         )
 
+    def test_get_unit(self):
+        assert self.units.units
+        kg = self.units.units[0]
+        unit = client.get_unit(kg.id)
+        assert unit is not None
+        self.assertEqual("kg", unit.name)
+        self.assertEqual("kg", (client.get_unit(name="kg") or o.Unit()).name)
+        self.assertIsNone(client.get_unit(name="no such unit"))
+
+    def test_find_unit(self):
+        ref = client.find_unit("kg")
+        assert ref is not None
+        self.assertEqual("kg", ref.name)
+        self.assertEqual(o.RefType.Unit, ref.ref_type)
+
     def test_get_all(self):
         props = client.get_all(o.FlowProperty)
         mass = next(filter(lambda p: p.name == "Mass", props))

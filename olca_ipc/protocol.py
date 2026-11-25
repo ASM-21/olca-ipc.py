@@ -1,5 +1,6 @@
 import abc
 import base64
+import logging as log
 import os
 import time
 
@@ -64,6 +65,34 @@ class ProtoClient(abc.ABC):
             if d.name == name:
                 return d
         return None
+
+    def get_unit(
+        self, uid: str | None = None, name: str | None = None
+    ) -> o.Unit | None:
+        """Returns the unit with the given ID or name.
+
+        Units are not stand-alone entities but are stored in unit groups, so
+        `get(o.Unit, ...)` does not work for them. This method loads all unit
+        groups and returns the unit with the given ID or, if no ID is given,
+        the first unit with the given name.
+        """
+        if not uid and not name:
+            log.error("no ID or name given")
+            return None
+        for group in self.get_all(o.UnitGroup):
+            for unit in group.units or []:
+                if uid:
+                    if unit.id == uid:
+                        return unit
+                elif unit.name == name:
+                    return unit
+        return None
+
+    def find_unit(self, name: str) -> o.Ref | None:
+        """Returns a reference to the first unit with the given name, e.g. to
+        set the unit of an exchange."""
+        unit = self.get_unit(name=name)
+        return unit.to_ref() if unit else None
 
     @abstractmethod
     def get_providers(
